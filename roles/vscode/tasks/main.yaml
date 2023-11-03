@@ -1,0 +1,37 @@
+---
+# https://code.visualstudio.com/docs/setup/linux
+- name: Add microsoft.asc
+  become: true
+  ansible.builtin.rpm_key:
+    key: https://packages.microsoft.com/keys/microsoft.asc
+    # gpg --show-keys file.asc
+    fingerprint: BC528686B50D79E339D3721CEB3E94ADBE1229CF
+    state: present
+
+- name: Add vscode repo
+  become: true
+  ansible.builtin.yum_repository:
+    name: vscode
+    description: Visual Studio Code
+    baseurl: https://packages.microsoft.com/yumrepos/vscode
+    gpgcheck: true
+    enabled: true
+    gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+
+- name: Install vscode
+  become: true
+  ansible.builtin.dnf:
+    name: "code"
+    state: present
+
+- name: Install VSCode extensions
+  shell: code --install-extension {{ item }}
+  register: stdout
+  changed_when: "'successfully installed' in stdout.stdout"
+  loop: "{{ vscode.extensions }}"
+
+- name: Uninstall VSCode extensions
+  shell: code --uninstall-extension {{ item }}
+  register: stdout
+  changed_when: "'successfully uninstalled' in stdout.stdout"
+  loop: "{{ vscode.extensions_deleted }}"

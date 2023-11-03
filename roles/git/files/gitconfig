@@ -1,0 +1,40 @@
+[user]
+	signingkey = 2125FA48A45BC9E1
+	name = Patrick Martin
+	email = patmarti@redhat.com
+
+[diff]
+  tool = meld
+
+[difftool "meld"]
+  cmd = meld "$LOCAL" "$REMOTE"
+
+[pager]
+#  log = /usr/local/share/git-core/contrib/diff-highlight/diff-highlight | less
+#  show = /usr/local/share/git-core/contrib/diff-highlight/diff-highlight | less
+#  diff = /usr/local/share/git-core/contrib/diff-highlight/diff-highlight | less
+#  log = diffr --line-numbers --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  log = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  show = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  diff = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+
+[alias]
+  #daemon-full = daemon --port=8080 --reuseaddr --base-path=. --export-all --verbose --enable=receive-pack
+  #tree = log --color --graph --abbrev-commit --decorate
+  #lg = log --color --graph --abbrev-commit --decorate
+  lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)'
+  setup-upstream = "!f(){ UPSTREAM="$1" && MASTER="${2:-master}" && git remote add upstream ${UPSTREAM} && git remote set-url --push upstream none && git fetch upstream && git branch ${MASTER} --set-upstream-to=upstream/${MASTER}; }; f"
+  #grep-upstream = "!f(){ PATTERN="$1" ; shift ; git branch -a | grep remotes/upstream/ | sed -e 's/[ \\*]*//' | grep -v -e '\\->' | xargs -I REV git grep "${PATTERN}" REV $@; }; f "
+  fetch-and-rebase = "!git fetch upstream master && git rebase upstream/master"
+
+  # fetch & checkout a gitlab MR from upstream: `git gitlab-mr upstream 53`
+  gitlab-mr = !sh -c 'git fetch $1 merge-requests/$2/head:mr-$1-$2 && git checkout mr-$1-$2' -
+
+
+#[remote "upstream"]
+#  fetch = +refs/pull-requests/*/from:refs/remotes/upstream/pull-requests/*
+
+# [init]
+#   templateDir = /Users/patmarti/.git-template
+# [rh-pre-commit]
+#   checkSecrets = true

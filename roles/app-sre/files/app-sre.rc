@@ -1,0 +1,27 @@
+export APP_INTERFACE_PATH=$HOME/dev/service/app-interface
+export QONTRACT_RECONCILE_PATH=$HOME/dev/app-sre/qontract-reconcile
+export QONTRACT_SCHEMAS_PATH=$HOME/dev/app-sre/qontract-schemas
+export QONTRACT_SERVER_PATH=$HOME/dev/app-sre/qontract-server
+export QONTRACT_VALIDATOR_PATH=$HOME/dev/app-sre/qontract-validator
+
+
+# From Maor
+# get_hive_cidrs(){
+#   #echo "$(curl -s -H "Authorization: Basic REDACTED" -g "https://app-interface.devshift.net/graphql?query={namespaces:namespaces_v1{name,cluster{network{vpc}}}}" | jq -r '.data.namespaces[] | select(.name=="hive") | .cluster.network.vpc' | tr '\n' ' ')"
+# }
+# alias ssh-hive='(set -x ; sshuttle -r bastion.ci.ext.devshift.net $(get_hive_cidrs))'
+
+# CLUSTER_PROXY_CIDRS=$(grep '^  vpc:' "${APP_INTERFACE_DIR:-$HOME/dev/service/app-interface}"/data/openshift/hive*/cluster.yml | awk '{print $3}' | tr '\n' ' ')
+# CLUSTER_PROXY_CIDRS="10.0.0.0/8"
+
+cluster-proxy() {
+  BACKPLANE_CIDR="10.170.0.0/16"  # this is actually split in multiple cidr blocks
+  CLUSTER_PROXY_CIDRS="10.125.0.0/16 10.163.0.0/16 10.133.0.0/16 10.162.0.0/16 10.134.0.0/16 10.124.0.0/16 10.123.0.0/16 10.164.0.0/16 10.135.0.0/16 10.132.0.0/16 10.136.0.0/16 $BACKPLANE_CIDR 10.138.0.0/16"
+  echo "Proxying $CLUSTER_PROXY_CIDRS ..."
+  # --dns
+  set -x
+  sshuttle -r bastion.ci.int.devshift.net ${CLUSTER_PROXY_CIDRS}
+  set +x
+  # bash -c "$(qontract-cli --config ${QONTRACT-RECONCILE_PATH}/config.prod.toml get sshuttle-command bastion.ci.int.devshift.net)"
+  # ---> sshuttle -r bastion.ci.ext.devshift.net 10.164.0.0/16 10.135.0.0/16 10.132.0.0/16 10.136.0.0/16 10.202.0.0/16 10.134.0.0/16 10.163.0.0/16 10.133.0.0/16 10.125.0.0/16 10.124.0.0/16 10.123.0.0/16 10.162.0.0/16
+}

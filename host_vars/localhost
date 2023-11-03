@@ -1,0 +1,72 @@
+---
+packages:
+  dnf:
+  # needed for asdf install python
+  - gcc
+  - zlib-devel
+  - bzip2-devel
+  - ncurses-devel
+  - libffi-devel
+  - readline-devel
+  - openssl-devel
+
+  - terminator
+  - tmux
+  - sshuttle
+  # - fzf
+
+  - just # make alternative, used in https://gitlab.cee.redhat.com/jchevret/aws-acct-mgmt
+  - ipcalc
+
+  - slack
+  - meld
+
+  - podman-docker
+  - buildah
+  - skopeo
+
+  # qontract-reconcile dependencies
+  - python3-devel
+  - libpq-devel
+
+  # - epson-inkjet-printer-escpr2
+  dnf_deleted: []
+
+  flatpak:
+  - com.bitwarden.desktop
+  flatpak_deleted: []
+
+asdf:
+  version: "v0.13.1"
+  plugins:
+  - name: oc
+    version: 4.13.18
+  - name: terraform
+    version: 0.13.7
+    # version: 1.6.2
+  - name: vault
+    version: 1.15.1
+  - name: terragrunt
+    version: 0.53.1
+  - name: python
+    version: 3.11.4
+  - name: stern
+    version: 1.26.0
+  - name: yq
+    version: 4.35.2
+
+vscode:
+  extensions:
+  - eamodio.gitlens
+  - Fr43nk.seito-openfile
+  # - VisualStudioExptTeam.vscodeintellicode
+  # - GitHub.copilot
+  - timonwong.shellcheck
+  - golang.Go
+  - ms-python.python
+  - ms-python.vscode-pylance
+  - ms-python.pylint
+  - ms-python.black-formatter
+  - ms-python.isort
+  - matangover.mypy
+  extensions_deleted: []

@@ -1,0 +1,14 @@
+---
+# stole some of these from https://github.com/fishi0x01/provision/blob/master/ansible/
+- hosts: localhost
+  name: Fedora setup
+  vars:
+    user: "{{ lookup('env', 'USER') }}"
+    home: "{{ lookup('env', 'HOME') }}"
+  roles:
+    - role: packages
+    - role: git
+    - role: oh-my-bash
+    - role: asdf
+    - role: vscode
+    - role: app-sre

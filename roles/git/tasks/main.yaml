@@ -1,0 +1,7 @@
+- name: Setup gitconfig
+  ansible.builtin.copy:
+    src: files/gitconfig
+    dest: "{{ home }}/.gitconfig"
+    mode: u=rw,g=r,o=r
+
+# TODO: setup rh-pre-commit hook

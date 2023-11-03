@@ -1,0 +1,19 @@
+---
+# https://github.com/ohmybash/oh-my-bash
+
+- name: Clone git repo
+  ansible.builtin.git:
+    repo: https://github.com/ohmybash/oh-my-bash.git
+    dest: "{{ home }}/.oh-my-bash"
+
+- name: Test existence of .bashrc.orig
+  stat:
+    path: "{{ home }}/.bashrc.orig"
+  register: bashrc_orig
+
+- name: Backup initial .bashrc
+  ansible.builtin.copy:
+    src: "{{ home }}/.bashrc"
+    dest: "{{ home }}/.bashrc.orig"
+    mode: u=rw,g=r,o=r
+  when: not bashrc_orig.stat.exists

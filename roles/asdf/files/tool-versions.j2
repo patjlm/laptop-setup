@@ -1,0 +1,3 @@
+{% for plugin in (asdf.plugins | sort(attribute='name')) -%}
+{{ plugin.name }} {{ plugin.version }}
+{% endfor %}

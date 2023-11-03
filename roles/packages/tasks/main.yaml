@@ -1,0 +1,24 @@
+---
+- name: Install DNF packages
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ packages.dnf }}"
+    state: present
+
+- name: Remove DNF packages
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ packages.dnf_deleted }}"
+    state: absent
+  when: packages.dnf_deleted
+
+- name: Install FlatPak packages
+  community.general.flatpak:
+    name: "{{ packages.flatpak }}"
+    state: present
+
+- name: Remove FlatPak packages
+  community.general.flatpak:
+    name: "{{ packages.flatpak_deleted }}"
+    state: absent
+  when: packages.flatpak_deleted

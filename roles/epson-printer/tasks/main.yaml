@@ -1,0 +1,11 @@
+http://download.ebz.epson.net/dsc/search/01/search/searchModule
+
+get with redirect
+driver:
+https://download.ebz.epson.net/dsc/du/02/DriverDownloadInfo.do?LG2=JA&CN2=US&CTI=178&PRN=Linux%20rpm%2064bit%20package&OSC=LX&DL
+
+utility:
+https://download.ebz.epson.net/dsc/du/02/DriverDownloadInfo.do?LG2=JA&CN2=US&CTI=177&PRN=Linux%20rpm%2064bit%20package&OSC=LX&DL
+
+epson scan2 driver:
+https://download.ebz.epson.net/dsc/du/02/DriverDownloadInfo.do?LG2=JA&CN2=US&CTI=171&PRN=Linux%20rpm%2064bit%20package&OSC=LX&DL

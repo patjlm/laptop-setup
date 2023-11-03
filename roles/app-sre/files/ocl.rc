@@ -1,0 +1,175 @@
+#!/bin/bash
+
+# Usage: source this file from your ~/.bash_profile
+
+# Parse app-interface to retrieve cluster information in $HOME/.ocl files with 'oclgen'.
+#   Just run 'oclgen'. It will parse files from ${APP_INTERFACE_PATH} or $HOME/dev/service/app-interface by default
+# 
+# Automate openshift login against cluster info retrieved with oclgen and set of some shell variable with 'ocl'.
+#   The following variables will be set:
+#   * OCL_CLUSTER_NAME
+#   * OCL_API_URL
+#   * OCL_CONSOLE_URL
+#   * OCL_DOMAIN
+#   * OCL_APPS_URL_SUFFIX
+#   * OCL_IDP
+#   If the current token is not valid anymore, the login web page will be opened to let you copy and paste it on the command line prompt.
+# Auto-complete cluster names on 'ocl' invocations, based on 'oclgen' gathered info.
+# 
+# Call the '_ocl_ps1' function to print currently logged in cluster information. Can be used in a PROMPT_COMMAND line.
+#   eg: PROMPT_COMMAND='__git_ps1 "\n⭕️ $(_ocl_ps1)\nlocal:\w" " \$ "'
+# 
+# Logout with 'oclo' to logout and unset OCL_* shell variables.
+
+ocl() {
+    if [ -z "${1}" ] ; then
+        if [ -n "${OCL_CLUSTER_NAME}" ] ; then
+            echo "Currently configured to access cluster ${OCL_CLUSTER_NAME}"
+        else
+            echo "Missing param: cluster_name."
+        fi
+        echo "Known clusters:"
+        echo
+        ls -1 "$HOME/.ocl"
+        return 1
+    fi
+
+    if [ ! -f "$HOME/.ocl/$1" ] ; then
+        echo "File not found $HOME/.ocl/$1"
+        echo "Missing cluster $1 definition"
+        return 1
+    fi
+
+    # unset all variables starting with OCL_
+    unset ${!OCL_*}
+    # unset $(set | grep "^OCL_" | cut -f1 -d=)
+    # unset OCL_API_URL
+    # unset OCL_APPS_URL_SUFFIX
+    # unset OCL_CONSOLE_URL
+
+    source "${HOME}/.ocl/${1}"
+
+    : "${OCL_API_URL:=https://api.${OCL_DOMAIN}:6443}"
+    : "${OCL_APPS_URL_SUFFIX:=apps.${OCL_DOMAIN}}"
+    : "${OCL_CONSOLE_URL:=https://console-openshift-console.${OCL_APPS_URL_SUFFIX}}"
+
+    export KUBECONFIG="${HOME}/.kube/config_${OCL_CLUSTER_NAME}"
+
+    local token
+
+    if [ -f "${KUBECONFIG}" ] && oc whoami ; then
+        echo "Already logged in"
+    elif [ "${OCL_IDP}" = "redhat-app-sre-auth" ]; then
+        echo "Retrieving token from redhat-app-sre-auth"
+        token=$(_token_from_kerberos)
+        if [ -z "${token}" ]; then
+            echo "Failed to retrieve token from Kerberos login"
+            return 1
+        fi
+        (set -x ; oc login "${OCL_API_URL}" --token "${token}")
+    else
+        python -m webbrowser "https://oauth-openshift.${OCL_APPS_URL_SUFFIX}/oauth/authorize?client_id=openshift-browser-client&idp=${OCL_IDP}&redirect_uri=https%3A%2F%2Foauth-openshift.${OCL_APPS_URL_SUFFIX}%2Foauth%2Ftoken%2Fdisplay&response_type=code"
+        echo "Please login on the open web window copy the generated token here"
+        read -r token
+        if [ -n "${token}" ] ; then
+            (set -x ; oc login "${OCL_API_URL}" --token "${token}")
+        else
+            echo "Empty token, skipping login"
+        fi
+    fi
+
+    # OCL_PS1="${COLOR_GRAY}${OCL_CLUSTER_NAME} (Console: ${OCL_CONSOLE_URL})${COLOR_DEFAULT}"
+
+    echo "Cluster: ${OCL_CLUSTER_NAME}"
+    echo "API URL: ${OCL_API_URL}"
+    echo "Console: ${OCL_CONSOLE_URL}"
+}
+
+oclo() {
+    oc logout
+    unset ${!OCL_*} KUBECONFIG
+}
+
+_ocl_ps1() {
+    if [ -n "$OCL_CLUSTER_NAME" ] ; then
+        local cur_ns
+        # cur_ns=$(kubens --current)
+        cur_ns=$(yq -r ".contexts[] | select(.name=\"$(oc config current-context)\") | .context.namespace" "${KUBECONFIG}")
+        echo "${COLOR_GRAY}${OCL_CLUSTER_NAME} / ${cur_ns} (${OCL_CONSOLE_URL})${COLOR_DEFAULT}"
+    else
+        #echo "${COLOR_GRAY}N/A${COLOR_DEFAULT}"
+	    echo "${COLOR_GRAY}$(oc config current-context 2>/dev/null)${COLOR_DEFAULT}"
+    fi
+}
+
+oclgen() {
+    local clustername api_url domain idp
+    local app_interface="${APP_INTERFACE_PATH:-$HOME/dev/service/app-interface}"
+    mkdir -p "$HOME/.ocl"
+    for f in $(grep -lR '^$schema: /openshift/cluster-1.yml' ${app_interface} | grep -E 'ya?ml') ; do
+        clustername=$(grep '^name:' "$f" | cut -f2 -d' ')
+        echo "Parsing $f into $HOME/.ocl/$clustername"
+        api_url=$(grep '^serverUrl:' "$f" | cut -f2 -d' ')
+        domain=$(echo "${api_url:12}" | cut -f1 -d:)
+        unset idp
+        grep -q 'name: redhat-app-sre-auth' "$f" && idp=redhat-app-sre-auth
+        {
+            echo 'OCL_CLUSTER_NAME=$(basename "${BASH_SOURCE}")'
+            echo "OCL_DOMAIN=$domain"
+            echo "OCL_API_URL=${api_url}"
+            echo "OCL_CONSOLE_URL=$(grep '^consoleUrl:' "$f" | cut -f2 -d' ')"
+            echo "OCL_IDP=${idp:-github-app-sre}"
+        } > "$HOME/.ocl/$clustername"
+    done
+}
+
+# stollen from https://devmanual.gentoo.org/tasks-reference/completion/index.html
+_ocl() {
+	local cur opts
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	opts=$(ls -1 "$HOME/.ocl")
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
+}
+complete -F _ocl ocl
+
+_token_from_kerberos() {
+    local cookies_dir oauth_host oauth_url sso_url post_vars token
+    if ! klist -s; then
+        kinit
+    fi
+    spinning_wheel
+    cookies_dir=$(mktemp)
+    spinning_wheel
+    oauth_host="oauth-openshift.apps.${OCL_DOMAIN}"
+    spinning_wheel
+    oauth_url=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -L "https://${oauth_host}/oauth/token/request" | awk -F '"' '/redhat-app-sre-auth/ { gsub("", "", $2); gsub("amp;", "", $2); print $2}')
+    spinning_wheel
+    sso_url=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -I "https://${oauth_host}${oauth_url}" | awk '/Location: / { gsub("\r", "", $2); print $2 }')
+    spinning_wheel
+    post_vars=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -L -k --negotiate -u : "${sso_url}" | awk -F '"' '/input type/ { print $4"="$6 }' | tr '\n' '&')
+    spinning_wheel
+    token=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -XPOST -d "${post_vars}" "https://${oauth_host}/oauth/token/display" | grep '<code>' | sed 's/\s*<[^>]*>//g')
+    spinning_wheel
+    rm -f "${cookies_dir}"
+    echo "${token}"
+}
+
+spinning_wheel() {
+    #global var
+    : ${SPINNING_WHEEL_INDEX:=1}
+    local chars="/-\|"
+    # local chars='⠁⠂⠄⡀⢀⠠⠐⠈'
+    # local chars="▁▂▃▄▅▆▇█▇▆▅▄▃▂▁"
+    # local chars="▉▊▋▌▍▎▏▎▍▌▋▊▉"
+    # local chars='←↖↑↗→↘↓↙'
+    # local chars='▖▘▝▗'
+    # local chars='┤┘┴└├┌┬┐'
+    # local chars='◢◣◤◥'
+    # local chars='◰◳◲◱'
+    # local chars='◴◷◶◵'
+    # local chars='◐◓◑◒'
+    # local chars='⣾⣽⣻⢿⡿⣟⣯⣷'
+    printf "\b${chars:SPINNING_WHEEL_INDEX++%${#chars}:1}" 1>&2
+}
