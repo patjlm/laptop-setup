@@ -10,6 +10,10 @@ packages:
   - readline-devel
   - openssl-devel
 
+  # needed for rh-pre-commit hook install
+  - tk-devel
+  - libsqlite3x-devel
+
   - terminator
   - tmux
   - sshuttle
@@ -37,7 +41,7 @@ packages:
   flatpak_deleted: []
 
 asdf:
-  version: "v0.13.1"
+  # version: "v0.13.1"
   plugins:
   - name: oc
     version: 4.13.18
@@ -49,9 +53,7 @@ asdf:
   - name: terragrunt
     version: 0.53.1
   - name: python
-    version: 3.11.4
-  - name: stern
-    version: 1.26.0
+    version: 3.11.6
   - name: yq
     version: 4.35.2
   - name: awscli

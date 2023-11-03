@@ -34,7 +34,8 @@
 #[remote "upstream"]
 #  fetch = +refs/pull-requests/*/from:refs/remotes/upstream/pull-requests/*
 
-# [init]
-#   templateDir = /Users/patmarti/.git-template
-# [rh-pre-commit]
-#   checkSecrets = true
+[init]
+        templateDir = /home/patmarti/.git-template
+[rh-pre-commit]
+        enableLocalConfig = false
+        checkSecrets = true

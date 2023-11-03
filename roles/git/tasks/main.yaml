@@ -4,4 +4,5 @@
     dest: "{{ home }}/.gitconfig"
     mode: u=rw,g=r,o=r
 
-# TODO: setup rh-pre-commit hook
+- name: rh-pre-commit hook
+  include_tasks: rh-pre-commit.yaml

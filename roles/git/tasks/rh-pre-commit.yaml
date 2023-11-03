@@ -1,0 +1,49 @@
+---
+# setup rh-pre-commit hook
+# https://gitlab.corp.redhat.com/infosec-public/developer-workbench/tools
+
+- name: Stat rh-gitleaks token file
+  ansible.builtin.stat:
+    path: "{{ home }}//.config/rh-gitleaks/auth.jwt"
+  register: rh_gitleaks_token_jwt
+
+- name: Open browser to get token
+  shell: xdg-open https://patterns.security.redhat.com/token
+  when: not rh_gitleaks_token_jwt.stat.exists
+
+- name: Ask user token
+  ansible.builtin.pause:
+    prompt: "Enter the token from the opened web browser"
+  register: rh_gitleaks_token
+  when: not rh_gitleaks_token_jwt.stat.exists
+
+- name: Create token file
+  copy:
+    content: "{{ rh_gitleaks_token.user_input }}"
+    dest: "{{ home }}//.config/rh-gitleaks/auth.jwt"
+  when: not rh_gitleaks_token_jwt.stat.exists
+
+- name: Clone rh-pre-commit repo
+  ansible.builtin.git:
+    repo: "https://gitlab.corp.redhat.com/infosec-public/developer-workbench/tools.git"
+    dest: "{{ home }}/.rh-pre-commit"
+    version: main
+
+- name: Install rh-pre-commit toolset
+  ansible.builtin.shell:
+    cmd: "{{ item }}"
+    chdir: "{{ home }}/.rh-pre-commit/rh-pre-commit"
+  with_items:
+  - make install
+  - python3 -m rh_pre_commit.multi configure --configure-git-template --force
+  - python3 -m rh_pre_commit.multi install --force --path {{ home }}/dev
+
+- name: Cleanup rh-pre-commit token
+  ansible.builtin.file:
+    path: "{{ home }}//.config/rh-gitleaks/auth.jwt"
+    state: absent
+
+- name: Cleanup rh-pre-commit hook clone
+  ansible.builtin.file:
+    path: "{{ home }}/.rh-pre-commit"
+    state: absent
