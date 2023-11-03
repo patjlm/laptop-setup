@@ -30,6 +30,7 @@
 - name: Install asdf package versions
   shell: asdf install {{ item.name }} {{ item.version }}
   register: stdout
+  when: item.version is defined
   changed_when: "'already installed' not in stdout.stdout"
   loop: "{{ asdf.plugins }}"
 

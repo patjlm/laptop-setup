@@ -42,7 +42,7 @@ asdf:
   - name: oc
     version: 4.13.18
   - name: terraform
-    version: 0.13.7
+    # version: 0.13.7
     # version: 1.6.2
   - name: vault
     version: 1.15.1
@@ -54,6 +54,18 @@ asdf:
     version: 1.26.0
   - name: yq
     version: 4.35.2
+  - name: awscli
+    version: 2.13.31
+  - name: golang
+    version: 1.21.3
+  - name: stern
+    version: 1.26.0
+  - name: tekton-cli
+    version: 0.32.2
+  - name: nodejs
+    version: 21.1.0
+  - name: ruby
+    # version: 3.2.2
 
 vscode:
   extensions:

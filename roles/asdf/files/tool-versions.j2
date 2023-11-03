@@ -1,3 +1,5 @@
 {% for plugin in (asdf.plugins | sort(attribute='name')) -%}
+{% if plugin.version is defined -%}
 {{ plugin.name }} {{ plugin.version }}
+{% endif %}
 {% endfor %}
