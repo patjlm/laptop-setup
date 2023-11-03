@@ -10,13 +10,13 @@
   cmd = meld "$LOCAL" "$REMOTE"
 
 [pager]
-#  log = /usr/local/share/git-core/contrib/diff-highlight/diff-highlight | less
-#  show = /usr/local/share/git-core/contrib/diff-highlight/diff-highlight | less
-#  diff = /usr/local/share/git-core/contrib/diff-highlight/diff-highlight | less
-#  log = diffr --line-numbers --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
-  log = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
-  show = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
-  diff = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  log = /usr/share/git-core/contrib/diff-highlight | less
+  show = /usr/share/git-core/contrib/diff-highlight | less
+  diff = /usr/share/git-core/contrib/diff-highlight | less
+  # log = diffr --line-numbers --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  # log = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  # show = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
+  # diff = diffr --colors refine-added:foreground:black:nobold --colors refine-removed:foreground:black:nobold | less
 
 [alias]
   #daemon-full = daemon --port=8080 --reuseaddr --base-path=. --export-all --verbose --enable=receive-pack
