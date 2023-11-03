@@ -3,7 +3,7 @@
   ansible.builtin.git:
     repo: "https://github.com/asdf-vm/asdf.git"
     dest: "{{ home }}/.asdf"
-    version: "{{ asdf.version }}"
+    version: "{{ asdf.version | default('master') }}"
 
 - name: Ensure {{ home }}/.bashrc.d dir exists
   ansible.builtin.file:
@@ -17,18 +17,21 @@
     dest: "{{ home }}/.bashrc.d/asdf.rc"
     mode: u=rw,g=r,o=r
 
+- name: Update asdf
+  ansible.builtin.shell: source {{ home }}/.asdf/asdf.sh && asdf update
+
 - name: Install asdf plugins
-  shell: asdf plugin add {{ item.name }}
+  ansible.builtin.shell: source {{ home }}/.asdf/asdf.sh && asdf plugin add {{ item.name }}
   register: stdout
   changed_when: "'already added' not in stdout.stdout"
   loop: "{{ asdf.plugins }}"
 
 - name: Update asdf plugins
   # running --all instead of looping on each plugin. It's faster
-  shell: asdf plugin update --all
+  ansible.builtin.shell: source {{ home }}/.asdf/asdf.sh && asdf plugin update --all
 
 - name: Install asdf package versions
-  shell: asdf install {{ item.name }} {{ item.version }}
+  ansible.builtin.shell: source {{ home }}/.asdf/asdf.sh && asdf install {{ item.name }} {{ item.version }}
   register: stdout
   when: item.version is defined
   changed_when: "'already installed' not in stdout.stdout"
