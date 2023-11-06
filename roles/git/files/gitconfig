@@ -27,9 +27,8 @@
   #grep-upstream = "!f(){ PATTERN="$1" ; shift ; git branch -a | grep remotes/upstream/ | sed -e 's/[ \\*]*//' | grep -v -e '\\->' | xargs -I REV git grep "${PATTERN}" REV $@; }; f "
   fetch-and-rebase = "!git fetch upstream master && git rebase upstream/master"
 
-  # fetch & checkout a gitlab MR from upstream: `git gitlab-mr upstream 53`
-  gitlab-mr = !sh -c 'git fetch $1 merge-requests/$2/head:mr-$1-$2 && git checkout mr-$1-$2' -
-
+  # fetch & checkout a gitlab MR from upstream: `git gitlab-mr 53 upstream`
+  gitlab-mr = !sh -c 'git fetch ${2:-upstream} merge-requests/$1/head:mr-${2:-upstream}-$1 && git checkout mr-${2:-upstream}-$1' -
 
 #[remote "upstream"]
 #  fetch = +refs/pull-requests/*/from:refs/remotes/upstream/pull-requests/*
