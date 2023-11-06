@@ -94,7 +94,7 @@ _ocl_ps1() {
     if [ -n "$OCL_CLUSTER_NAME" ] ; then
         local cur_ns
         # cur_ns=$(kubens --current)
-        cur_ns=$(yq -r ".contexts[] | select(.name=\"$(oc config current-context)\") | .context.namespace" "${KUBECONFIG}")
+        cur_ns=$(yq -r ".contexts[] | select(.name==\"$(oc config current-context)\") | .context.namespace" "${KUBECONFIG}")
         echo "${COLOR_GRAY}${OCL_CLUSTER_NAME} / ${cur_ns} (${OCL_CONSOLE_URL})${COLOR_DEFAULT}"
     else
         #echo "${COLOR_GRAY}N/A${COLOR_DEFAULT}"
