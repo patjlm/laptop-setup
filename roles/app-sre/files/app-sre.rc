@@ -4,6 +4,15 @@ export QONTRACT_SCHEMAS_PATH=$HOME/dev/app-sre/qontract-schemas
 export QONTRACT_SERVER_PATH=$HOME/dev/app-sre/qontract-server
 export QONTRACT_VALIDATOR_PATH=$HOME/dev/app-sre/qontract-validator
 
+export APP_INTERFACE_STATE_BUCKET_ACCOUNT=app-sre
+export APP_INTERFACE_STATE_BUCKET=app-interface-production
+
+export QONFIG_DEBUG=${QONTRACT_RECONCILE_PATH}/config.debug.toml
+
+qli() {
+  source ${QONTRACT_RECONCILE_PATH}/venv/bin/activate
+  qontract-cli --config ${QONFIG_DEBUG} $*
+}
 
 # From Maor
 # get_hive_cidrs(){
