@@ -1,0 +1,22 @@
+NoHostAuthenticationForLocalhost yes
+
+ForwardAgent yes
+
+#UserKnownHostsFile /dev/null
+#StrictHostKeyChecking no
+#HashKnownHosts no
+#ServerAliveInterval 180
+
+ControlMaster auto
+#ControlPath ~/.ssh/ctrl:%h-%r
+ControlPath ~/.ssh/ctrl/%C
+ControlPersist 600s
+#ControlPersist 43200
+
+# https://github.blog/2021-09-01-improving-git-protocol-security-github/#standard-git-client
+Host github.com
+    UpdateHostKeys yes
+
+Include config-app-sre
+
+# Nothing after this line

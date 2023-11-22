@@ -7,6 +7,7 @@
     home: "{{ lookup('env', 'HOME') }}"
   roles:
     - role: packages
+    - role: ssh
     - role: git
     - role: oh-my-bash
     - role: asdf

@@ -1,0 +1,20 @@
+Host *.redhat.com
+  GSSAPIAuthentication yes
+  GSSAPIDelegateCredentials no
+  # https://mojo.redhat.com/docs/DOC-1069454 says never delegate credentials
+
+Host bastion.ci.ext.devshift.net
+
+Host ci.ext.ssh.devshift.net
+
+Host ci-ext-jenkins-slave*
+  ProxyJump bastion.ci.ext.devshift.net
+  #ProxyCommand ssh bastion.ci.ext.devshift.net nc %h %p
+
+Host ci-int-aws-jenkins-worker-*
+  Hostname %h.int.devshift.net
+  #IdentityFile ~/.ssh/ansible
+
+# Jenkins dynamic instances on 192.168.16.0/20
+Host 192.168.16.*, 192.168.17.*, 192.168.18.*, 192.168.19.*, 192.168.2?.*, 192.168.30.*, 192.168.31.*
+  ProxyJump ci.ext.ssh.devshift.net

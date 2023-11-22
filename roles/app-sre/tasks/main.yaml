@@ -5,14 +5,13 @@
     state: directory
     mode: u=rwx,g=rx,o=rx
 
-- name: ocl.rc
+- name: Copy bashrc.d files
   ansible.builtin.copy:
-    src: files/ocl.rc
-    dest: "{{ home }}/.bashrc.d/ocl.rc"
+    src: files/{{ item }}
+    dest: "{{ home }}/.bashrc.d/{{ item }}"
     mode: u=rw,g=r,o=r
-
-- name: app-sre.rc
-  ansible.builtin.copy:
-    src: files/app-sre.rc
-    dest: "{{ home }}/.bashrc.d/app-sre.rc"
-    mode: u=rw,g=r,o=r
+  loop:
+  - patrick.rc
+  - ocl.rc
+  - app-sre.rc
+  - ps1

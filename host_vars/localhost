@@ -1,6 +1,24 @@
 ---
 packages:
   dnf:
+  - terminator
+  - vim-enhanced
+  - tmux
+  - sshuttle
+  # - fzf
+  - just # make alternative, used in https://gitlab.cee.redhat.com/jchevret/aws-acct-mgmt
+  - ipcalc
+  - openssl
+  - htop
+
+  - slack
+  - meld
+
+  - podman-docker
+  - podman-compose
+  - buildah
+  - skopeo
+
   # needed for asdf install python
   - gcc
   - zlib-devel
@@ -14,27 +32,16 @@ packages:
   - tk-devel
   - libsqlite3x-devel
 
-  - terminator
-  - tmux
-  - sshuttle
-  # - fzf
-
-  - just # make alternative, used in https://gitlab.cee.redhat.com/jchevret/aws-acct-mgmt
-  - ipcalc
-
-  - slack
-  - meld
-
-  - podman-docker
-  - buildah
-  - skopeo
-
   # qontract-reconcile dependencies
   - python3-devel
   - libpq-devel
 
   # - epson-inkjet-printer-escpr2
-  dnf_deleted: []
+  dnf_deleted:
+  # opensc seems to be causing Firefox to request a cert password constantly
+  # Smart card library and applications
+  # Found this info in https://source.redhat.com/personal_blogs/setting_up_vpnldapkerberos_sso_on_a_fresh_fedora_33_install
+  - opensc
 
   flatpak:
   - com.bitwarden.desktop
@@ -45,6 +52,10 @@ asdf:
   plugins:
   - name: oc
     version: 4.13.18
+  - name: kubectl
+    version: 1.28.3
+  - name: kubectx
+    version: 0.9.5
   - name: terraform
     # version: 0.13.7
     # version: 1.6.2
@@ -68,6 +79,12 @@ asdf:
     version: 21.1.0
   - name: ruby
     # version: 3.2.2
+  - name: kind
+    version: 0.20.0
+  - name: minikube
+    version: 1.32.0
+  - name: yarn
+    # version: 1.22.19
 
 vscode:
   extensions:
@@ -83,4 +100,7 @@ vscode:
   - ms-python.black-formatter
   - ms-python.isort
   - matangover.mypy
+  - bierner.markdown-mermaid
+  - samuelcolvin.jinjahtml
+  - ms-vscode.makefile-tools
   extensions_deleted: []

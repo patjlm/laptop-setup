@@ -1,0 +1,38 @@
+---
+- name: setup ssh_config facts
+  ansible.builtin.set_fact:
+    _ssh:
+      base: "{{ home }}/.ssh"
+      configs:
+      - config-app-sre
+
+- name: Create the .ssh directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+  - path: "{{ _ssh.base }}"
+    mode: "0700"
+  - path: "{{ _ssh.base }}/ctrl"
+    mode: "0755"
+
+- name: Copy .ssh/config
+  ansible.builtin.copy:
+    src: files/config
+    dest: "{{ _ssh.base }}/config"
+    mode: u=rw,g=r,o=r
+  
+- name: Copy additional .ssh/config files
+  ansible.builtin.copy:
+    src: files/{{ item }}
+    dest: "{{ _ssh.base }}/{{ item }}"
+    mode: u=rw,g=r,o=r
+  loop: "{{ _ssh.configs }}"
+
+- name: Ensure additional .ssh/config files are used
+  ansible.builtin.lineinfile:
+    path: "{{ _ssh.base }}/config"
+    regexp: '^Include {{ item }}$'
+    line: Include {{ item }}
+  loop: "{{ _ssh.configs }}"

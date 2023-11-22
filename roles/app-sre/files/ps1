@@ -1,0 +1,16 @@
+function _python_ps1() {
+	local version=$(python --version | cut -f2 -d' ')
+	local venv="${VIRTUAL_ENV/$HOME/'~'}"
+	echo "🐍 ${version} ${venv}"
+}
+
+source /usr/share/git-core/contrib/completion/git-prompt.sh
+GIT_PS1_SHOWDIRTYSTATE=1
+GIT_PS1_SHOWSTASHSTATE=1
+GIT_PS1_SHOWUNTRACKEDFILES=1
+GIT_PS1_SHOWUPSTREAM="auto name verbose"
+GIT_PS1_SHOWCONFLICTSTATE="yes"
+GIT_PS1_SHOWCOLORHINTS=1
+
+#PROMPT_COMMAND='__git_ps1 "\n$(_python_ps1)\n⭕️ $(_ocl_ps1)\nlocal:\w" " \$ "'
+PROMPT_COMMAND='__git_ps1 "\n$(_python_ps1)\n⭕️ $(_ocl_ps1)\n\w" "\n\$ "'
