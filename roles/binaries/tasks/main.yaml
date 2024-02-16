@@ -1,0 +1,20 @@
+- name: Download direct binaries
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    # checksum: sha256:{{ item.checksum }}
+    dest: "{{ home }}/bin/{{ item.name }}"
+    mode: "0755"
+  loop: "{{ binaries.direct }}"
+
+- name: Setup completion
+  ansible.builtin.shell: "{{ home }}/bin/{{ item.name }} {{ item.completion_command | default('completion bash') }} > {{ home }}/.bashrc.d/{{ item.name }}_completion"
+  when: "{{ item.completion | default(true) }}"
+  loop: "{{ binaries.direct }}"
+
+- name: Unarchive binaries
+  ansible.builtin.unarchive:
+    src: "{{ item.url }}"
+    dest: "{{ home }}/bin"
+    remote_src: yes
+    include: "{{ item.include }}"
+  loop: "{{ binaries.targz }}"
