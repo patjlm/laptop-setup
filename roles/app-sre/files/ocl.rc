@@ -103,23 +103,34 @@ _ocl_ps1() {
 }
 
 oclgen() {
-    local clustername api_url domain idp
+    local clustername api_url console_url domain idp hypershift oauth_host
     local app_interface="${APP_INTERFACE_PATH:-$HOME/dev/service/app-interface}"
     mkdir -p "$HOME/.ocl"
     for f in $(grep -lR '^$schema: /openshift/cluster-1.yml' ${app_interface} | grep -E 'ya?ml') ; do
         clustername=$(grep '^name:' "$f" | cut -f2 -d' ')
         echo "Parsing $f into $HOME/.ocl/$clustername"
-        api_url=$(grep '^serverUrl:' "$f" | cut -f2 -d' ')
+        api_url=$(yq -r .serverUrl "$f")
+        # api_url=$(grep '^serverUrl:' "$f" | cut -f2 -d' ')
+        console_url=$(yq -r .consoleUrl "$f")
+        # console_url=$(grep '^consoleUrl:' "$f" | cut -f2 -d' ')
         domain=$(echo "${api_url:12}" | cut -f1 -d:)
-        unset idp
-        grep -q 'name: redhat-app-sre-auth' "$f" && idp=redhat-app-sre-auth
+        idp=$(yq -r '.auth[0].name' "$f")
+        # grep -q 'name: redhat-app-sre-auth' "$f" && idp=redhat-app-sre-auth || idp=github-app-sre
+        hypershift=$(yq -r '.spec.hypershift // false' "$f")
+        # grep -q '^  hypershift: true' "$f" && hypershift=true || hypershift=false
+        oauth_host="oauth-openshift.apps.${domain}"
+        if ${hypershift}; then
+            oauth_host="oauth.${domain}"
+        fi
         {
             echo 'OCL_CLUSTER_NAME=$(basename "${BASH_SOURCE}")'
-            echo "OCL_DOMAIN=$domain"
+            echo "OCL_HYPERSHIFT=${hypershift}"
+            echo "OCL_DOMAIN=${domain}"
             echo "OCL_API_URL=${api_url}"
-            echo "OCL_CONSOLE_URL=$(grep '^consoleUrl:' "$f" | cut -f2 -d' ')"
-            echo "OCL_IDP=${idp:-github-app-sre}"
-        } > "$HOME/.ocl/$clustername"
+            echo "OCL_CONSOLE_URL=${console_url}"
+            echo "OCL_OAUTH_HOST=${oauth_host}"
+            echo "OCL_IDP=${idp}"
+        } > "${HOME}/.ocl/${clustername}"
     done
 }
 
@@ -134,23 +145,49 @@ _ocl() {
 }
 complete -F _ocl ocl
 
+_ocl_debug() {
+    if ${_OCL_DEBUG:-false}; then
+        echo "$@" 1>&2
+    fi
+}
+
+_cookie_curl() {
+    _ocl_debug curl -s -c "${cookies_dir}" -b "${cookies_dir}" "$@"
+    curl -s -c "${cookies_dir}" -b "${cookies_dir}" "$@"
+}
+
 _token_from_kerberos() {
-    local cookies_dir oauth_host oauth_url sso_url post_vars token
+    local cookies_dir oauth_host oauth_path_params oauth_url sso_url post_vars token
     if ! klist -s; then
         kinit
     fi
     spinning_wheel
     cookies_dir=$(mktemp)
     spinning_wheel
-    oauth_host="oauth-openshift.apps.${OCL_DOMAIN}"
+    oauth_host="${OCL_OAUTH_HOST}"
     spinning_wheel
-    oauth_url=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -L "https://${oauth_host}/oauth/token/request" | awk -F '"' '/redhat-app-sre-auth/ { gsub("", "", $2); gsub("amp;", "", $2); print $2}')
+    if ${OCL_HYPERSHIFT:-false}; then
+        spinning_wheel
+        oauth_url=$(_cookie_curl -I "https://${oauth_host}/oauth/token/request" | awk '/Location: / { gsub("\r", "", $2); print $2 }')
+    else
+        spinning_wheel
+        oauth_path_params=$(_cookie_curl -L "https://${oauth_host}/oauth/token/request" | awk -F '"' '/redhat-app-sre-auth/ { gsub("", "", $2); gsub("amp;", "", $2); print $2}')
+        oauth_url="https://${oauth_host}${oauth_path_params}"
+    fi
+    _ocl_debug "oauth_url: '${oauth_url}'"
+    [[ -z $oauth_url ]] && echo "failed to find oauth_url" 1>&2 && rm -f "${cookies_dir}" && return 1
     spinning_wheel
-    sso_url=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -I "https://${oauth_host}${oauth_url}" | awk '/Location: / { gsub("\r", "", $2); print $2 }')
+    sso_url=$(_cookie_curl -I "${oauth_url}" | awk '/Location: / { gsub("\r", "", $2); print $2 }')
+    _ocl_debug "sso_url: '${sso_url}'" 
+    [[ -z $sso_url ]] && echo "failed to find sso_url" 1>&2 && rm -f "${cookies_dir}" && return 1
     spinning_wheel
-    post_vars=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -L -k --negotiate -u : "${sso_url}" | awk -F '"' '/input type/ { print $4"="$6 }' | tr '\n' '&')
+    post_vars=$(_cookie_curl -L -k --negotiate -u : "${sso_url}" | awk -F '"' '/input type/ { print $4"="$6 }' | tr '\n' '&')
+    _ocl_debug "post_vars: '${post_vars}'" 
+    [[ -z $post_vars ]] && echo "failed to find post_vars" 1>&2 && rm -f "${cookies_dir}" && return 1
     spinning_wheel
-    token=$(curl -s -c "${cookies_dir}" -b "${cookies_dir}" -XPOST -d "${post_vars}" "https://${oauth_host}/oauth/token/display" | grep '<code>' | sed 's/\s*<[^>]*>//g')
+    token=$(_cookie_curl -XPOST -d "${post_vars}" "https://${oauth_host}/oauth/token/display" | grep '<code>' | sed 's/\s*<[^>]*>//g')
+    _ocl_debug "token: '${token}'"
+    [[ -z $token ]] && echo "failed to find token" 1>&2 && rm -f "${cookies_dir}" && return 1
     spinning_wheel
     rm -f "${cookies_dir}"
     echo "${token}"
