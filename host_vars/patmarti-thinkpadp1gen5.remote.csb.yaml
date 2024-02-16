@@ -10,9 +10,11 @@ packages:
   - ipcalc
   - openssl
   - htop
+  - the_silver_searcher
 
   - slack
   - meld
+  - gstreamer1-plugin-openh264
 
   - podman-docker
   - podman-compose
@@ -28,6 +30,8 @@ packages:
   - readline-devel
   - openssl-devel
 
+  - autoconf  
+
   # needed for rh-pre-commit hook install
   - tk-devel
   - libsqlite3x-devel
@@ -35,6 +39,11 @@ packages:
   # qontract-reconcile dependencies
   - python3-devel
   - libpq-devel
+  - git-secrets
+  - helm
+
+  # pipx rh-aws-saml-login
+  - krb5-devel
 
   # - epson-inkjet-printer-escpr2
   dnf_deleted:
@@ -42,29 +51,36 @@ packages:
   # Smart card library and applications
   # Found this info in https://source.redhat.com/personal_blogs/setting_up_vpnldapkerberos_sso_on_a_fresh_fedora_33_install
   - opensc
+  - golang-github-prometheus
+  - golang-github-prometheus-alertmanager
 
   flatpak:
   - com.bitwarden.desktop
   flatpak_deleted: []
 
+  pipx:
+    - rh-aws-saml-login
+
 asdf:
   # version: "v0.13.1"
   plugins:
   - name: oc
-    version: 4.13.18
+    version: 4.14.12
   - name: kubectl
     version: 1.28.3
   - name: kubectx
     version: 0.9.5
   - name: terraform
-    # version: 0.13.7
+    version: 0.13.7
     # version: 1.6.2
   - name: vault
     version: 1.15.1
   - name: terragrunt
     version: 0.53.1
   - name: python
-    version: 3.11.6
+    version: 3.11.5
+  # - name: pipx
+  #   version: 1.4.3
   - name: yq
     version: 4.35.2
   - name: awscli
@@ -86,6 +102,34 @@ asdf:
   - name: yarn
     # version: 1.22.19
 
+binaries:
+  direct:
+  - name: ocm
+    url: https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-linux-amd64
+    checksum: https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-linux-amd64.sha256
+
+  - name: rosa
+    url: https://github.com/openshift/rosa/releases/latest/download/rosa-linux-amd64
+    checksum: https://github.com/openshift/rosa/releases/latest/download/rosa-linux-amd64.sha256
+
+  targz:
+  - name: ocm-backplane
+    url: https://github.com/openshift/backplane-cli/releases/download/v0.1.21/ocm-backplane_0.1.21_Linux_x86_64.tar.gz
+    include:
+    - ocm-backplane
+
+  # - name: promtool
+  #   url: https://github.com/prometheus/prometheus/releases/download/v2.33.3/prometheus-2.33.3.linux-amd64.tar.gz
+  #   extra_opts: [--strip-components=1]
+  #   include:
+  #   - promtool
+
+  # - name: amtool
+  #   url: https://github.com/prometheus/alertmanager/releases/download/v0.24.0/alertmanager-0.24.0.linux-amd64.tar.gz
+  #   extra_opts: [--strip-components=1]
+  #   include:
+  #   - amtool
+
 vscode:
   extensions:
   - eamodio.gitlens
@@ -96,11 +140,12 @@ vscode:
   - golang.Go
   - ms-python.python
   - ms-python.vscode-pylance
-  - ms-python.pylint
-  - ms-python.black-formatter
-  - ms-python.isort
+  - charliermarsh.ruff
   - matangover.mypy
   - bierner.markdown-mermaid
   - samuelcolvin.jinjahtml
   - ms-vscode.makefile-tools
   extensions_deleted: []
+  # - ms-python.pylint
+  # - ms-python.black-formatter
+  # - ms-python.isort
