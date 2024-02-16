@@ -1,49 +1,114 @@
 ---
-# setup rh-pre-commit hook
-# https://gitlab.corp.redhat.com/infosec-public/developer-workbench/tools
+# RPM install from https://source.redhat.com/departments/it/it-information-security/leaktk/leaktk_guides/leaktk_rpm_installation
 
-- name: Stat rh-gitleaks token file
+- name: Enable Fedora Copr for Infosec leaktk
+  become: true
+  ansible.builtin.command:
+    cmd: dnf copr enable -y copr.devel.redhat.com/@infosec-public/leaktk
+    creates: /etc/yum.repos.d/_copr:copr.devel.redhat.com:group_infosec-public:leaktk.repo
+
+- name: Install Infosec leaktk DNF packages
+  become: true
+  ansible.builtin.dnf:
+    name: rh-pre-commit
+    state: present
+
+- name: Stat rh-gitleaks token file in ~/.config/rh-gitleaks/auth.jwt
   ansible.builtin.stat:
-    path: "{{ home }}//.config/rh-gitleaks/auth.jwt"
-  register: rh_gitleaks_token_jwt
+    path: "{{ home }}/.config/rh-gitleaks/auth.jwt"
+  register: rh_gitleaks_token_jwt_file
+
+- name: Parse JWT
+  ansible.builtin.set_fact:
+    rh_gitleaks_now: "{{ now(utc=True, fmt='%s') }}"
+    # padding with ===.. to ensure 'valid' base64
+    rh_gitleaks_token_jwt: "{{ (lookup('ansible.builtin.file', home ~ '/.config/rh-gitleaks/auth.jwt').split('.')[1] + '=====')
+                              | b64decode | from_json }}"
+  when: rh_gitleaks_token_jwt_file.stat.exists
+
+- name: Check JWT expiration
+  ansible.builtin.set_fact:
+    rh_gitleaks_token_expired: "{{ (rh_gitleaks_now | int) > (rh_gitleaks_token_jwt.exp | int) }}"
+  when: rh_gitleaks_token_jwt_file.stat.exists
+
+# no need to delete, we'll detect if the token is expired
+# - name: Cleanup rh-pre-commit token
+#   ansible.builtin.file:
+#     path: "{{ home }}//.config/rh-gitleaks/auth.jwt"
+#     state: absent
+#   when: rh_gitleaks_token_jwt_file.stat.exists and rh_gitleaks_token_expired
 
 - name: Open browser to get token
   shell: xdg-open https://patterns.security.redhat.com/token
-  when: not rh_gitleaks_token_jwt.stat.exists
+  when: not rh_gitleaks_token_jwt_file.stat.exists or rh_gitleaks_token_expired
 
 - name: Ask user token
   ansible.builtin.pause:
     prompt: "Enter the token from the opened web browser"
   register: rh_gitleaks_token
-  when: not rh_gitleaks_token_jwt.stat.exists
+  when: not rh_gitleaks_token_jwt_file.stat.exists or rh_gitleaks_token_expired
 
-- name: Create token file
+- name: Create token file in ~/.config/rh-gitleaks/auth.jwt
   copy:
     content: "{{ rh_gitleaks_token.user_input }}"
-    dest: "{{ home }}//.config/rh-gitleaks/auth.jwt"
-  when: not rh_gitleaks_token_jwt.stat.exists
+    dest: "{{ home }}/.config/rh-gitleaks/auth.jwt"
+  when: not rh_gitleaks_token_jwt_file.stat.exists or rh_gitleaks_token_expired
 
-- name: Clone rh-pre-commit repo
-  ansible.builtin.git:
-    repo: "https://gitlab.corp.redhat.com/infosec-public/developer-workbench/tools.git"
-    dest: "{{ home }}/.rh-pre-commit"
-    version: main
-
-- name: Install rh-pre-commit toolset
+- name: Setup rh-pre-commit
   ansible.builtin.shell:
     cmd: "{{ item }}"
-    chdir: "{{ home }}/.rh-pre-commit/rh-pre-commit"
   with_items:
-  - make install
-  - python3 -m rh_pre_commit.multi configure --configure-git-template --force
-  - python3 -m rh_pre_commit.multi install --force --path {{ home }}/dev
+  - rh-multi-pre-commit configure --configure-git-template --force
+  - rh-multi-pre-commit install --force --path {{ home }}/dev
 
-# - name: Cleanup rh-pre-commit token
-#   ansible.builtin.file:
+# Obsolete: setup rh-pre-commit hook from git
+# https://gitlab.corp.redhat.com/infosec-public/developer-workbench/tools
+
+# uninstalled following
+# https://source.redhat.com/departments/it/it-information-security/leaktk/leaktk_guides/rh_pre_commit_uninstallation
+
+# - name: Stat rh-gitleaks token file
+#   ansible.builtin.stat:
 #     path: "{{ home }}//.config/rh-gitleaks/auth.jwt"
-#     state: absent
+#   register: rh_gitleaks_token_jwt_file
 
-- name: Cleanup rh-pre-commit hook clone
-  ansible.builtin.file:
-    path: "{{ home }}/.rh-pre-commit"
-    state: absent
+# - name: Open browser to get token
+#   shell: xdg-open https://patterns.security.redhat.com/token
+#   when: not rh_gitleaks_token_jwt_file.stat.exists
+
+# - name: Ask user token
+#   ansible.builtin.pause:
+#     prompt: "Enter the token from the opened web browser"
+#   register: rh_gitleaks_token
+#   when: not rh_gitleaks_token_jwt_file.stat.exists
+
+# - name: Create token file
+#   copy:
+#     content: "{{ rh_gitleaks_token.user_input }}"
+#     dest: "{{ home }}//.config/rh-gitleaks/auth.jwt"
+#   when: not rh_gitleaks_token_jwt_file.stat.exists
+
+# - name: Clone rh-pre-commit repo
+#   ansible.builtin.git:
+#     repo: "https://gitlab.corp.redhat.com/infosec-public/developer-workbench/tools.git"
+#     dest: "{{ home }}/.rh-pre-commit"
+#     version: main
+
+# - name: Install rh-pre-commit toolset
+#   ansible.builtin.shell:
+#     cmd: "{{ item }}"
+#     chdir: "{{ home }}/.rh-pre-commit/rh-pre-commit"
+#   with_items:
+#   - make install
+#   - python3 -m rh_pre_commit.multi configure --configure-git-template --force
+#   - python3 -m rh_pre_commit.multi install --force --path {{ home }}/dev
+
+# # - name: Cleanup rh-pre-commit token
+# #   ansible.builtin.file:
+# #     path: "{{ home }}//.config/rh-gitleaks/auth.jwt"
+# #     state: absent
+
+# - name: Cleanup rh-pre-commit hook clone
+#   ansible.builtin.file:
+#     path: "{{ home }}/.rh-pre-commit"
+#     state: absent
