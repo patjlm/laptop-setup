@@ -1,6 +1,24 @@
 ---
+# - hosts: localhost
+#   tasks:
+#   - debug: var=hostvars
+#       # msg: "{{hostvars}}"
+
+- hosts: localhost
+  tasks:
+  - become: true
+    ansible.builtin.command: id -u
+    register: id_output
+
+  - ansible.builtin.assert:
+      that:
+      - id_output.stdout == '0'
+      fail_msg: "please run `sudo id -u` first, to allow sudo"
+      success_msg: "sudo ok,thanks!" 
+
 # stole some of these from https://github.com/fishi0x01/provision/blob/master/ansible/
 - hosts: localhost
+  connection: local
   name: Fedora setup
   vars:
     user: "{{ lookup('env', 'USER') }}"
@@ -9,7 +27,8 @@
     - role: packages
     - role: ssh
     - role: git
-    - role: oh-my-bash
+    # - role: oh-my-bash
     - role: asdf
+    - role: binaries
     - role: vscode
     - role: app-sre
