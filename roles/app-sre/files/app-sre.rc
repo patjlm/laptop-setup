@@ -4,13 +4,22 @@ export QONTRACT_SCHEMAS_PATH=$HOME/dev/app-sre/qontract-schemas
 export QONTRACT_SERVER_PATH=$HOME/dev/app-sre/qontract-server
 export QONTRACT_VALIDATOR_PATH=$HOME/dev/app-sre/qontract-validator
 
-export APP_INTERFACE_STATE_BUCKET_ACCOUNT=app-sre
-export APP_INTERFACE_STATE_BUCKET=app-interface-production
+# export APP_INTERFACE_STATE_BUCKET_ACCOUNT=app-sre
+# export APP_INTERFACE_STATE_BUCKET=app-interface-production
+# export gitlab_pr_submitter_queue_url=https://sqs.us-east-1.amazonaws.com/950916221866/app-interface-gitlab-pr-submitter
+
 
 export QONFIG_DEBUG=${QONTRACT_RECONCILE_PATH}/config.debug.toml
 
+aienv() {
+  export APP_INTERFACE_STATE_BUCKET_ACCOUNT=app-sre
+  export APP_INTERFACE_STATE_BUCKET=app-interface-production
+  export gitlab_pr_submitter_queue_url=https://sqs.us-east-1.amazonaws.com/950916221866/app-interface-gitlab-pr-submitter
+}
+
 qli() {
   source ${QONTRACT_RECONCILE_PATH}/venv/bin/activate
+  aienv
   qontract-cli --config ${QONFIG_DEBUG} $*
 }
 
