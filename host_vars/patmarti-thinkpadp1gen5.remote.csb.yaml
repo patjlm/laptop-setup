@@ -5,17 +5,21 @@ packages:
   - vim-enhanced
   - tmux
   - sshuttle
+  - system-config-printer
   # - fzf
   - just # make alternative, used in https://gitlab.cee.redhat.com/jchevret/aws-acct-mgmt
   - ipcalc
   - openssl
   - htop
   - the_silver_searcher
+  - python3-jinja2-cli
 
   - slack
   - meld
   - gstreamer1-plugin-openh264
+  - inkscape
 
+  - podman
   - podman-docker
   - podman-compose
   - buildah
@@ -40,7 +44,7 @@ packages:
   - python3-devel
   - libpq-devel
   - git-secrets
-  - helm
+  # - helm --> moving to asdf
 
   # pipx rh-aws-saml-login
   - krb5-devel
@@ -59,7 +63,7 @@ packages:
   flatpak_deleted: []
 
   pipx:
-    - rh-aws-saml-login
+      - rh-aws-saml-login
 
 asdf:
   # version: "v0.13.1"
@@ -68,6 +72,8 @@ asdf:
     version: 4.14.12
   - name: kubectl
     version: 1.28.3
+  - name: helm
+    version: 3.11.1
   - name: kubectx
     version: 0.9.5
   - name: terraform
@@ -75,6 +81,8 @@ asdf:
     # version: 1.6.2
   - name: vault
     version: 1.15.1
+  - name: promtool
+    version: 2.54.1
   - name: terragrunt
     version: 0.53.1
   - name: python
@@ -101,6 +109,8 @@ asdf:
     version: 1.32.0
   - name: yarn
     # version: 1.22.19
+  - name: uv
+    version: 0.5.2 
 
 binaries:
   direct:
